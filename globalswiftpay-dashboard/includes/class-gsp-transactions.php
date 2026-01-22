@@ -44,6 +44,45 @@ class GSP_Transactions {
     }
     
     /**
+     * Update transaction status by type and related ID
+     * This syncs the transaction record with its parent table (deposits, withdrawals, etc.)
+     */
+    public static function update_status_by_type($user_id, $type, $related_id, $status) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'gsp_transactions';
+        
+        // Find the transaction by user_id, type and the related ID stored in details
+        $transactions = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, details FROM $table WHERE user_id = %d AND type = %s",
+            $user_id,
+            $type
+        ));
+        
+        foreach ($transactions as $transaction) {
+            $details = maybe_unserialize($transaction->details);
+            
+            // Check if this transaction matches the related ID
+            $match = false;
+            if ($type === 'deposit' && isset($details['deposit_id']) && $details['deposit_id'] == $related_id) {
+                $match = true;
+            } elseif ($type === 'withdrawal' && isset($details['withdrawal_id']) && $details['withdrawal_id'] == $related_id) {
+                $match = true;
+            } elseif (($type === 'transfer_out' || $type === 'transfer_in') && isset($details['transfer_id']) && $details['transfer_id'] == $related_id) {
+                $match = true;
+            } elseif (strpos($type, 'conversion_') === 0 && isset($details['conversion_id']) && $details['conversion_id'] == $related_id) {
+                $match = true;
+            }
+            
+            if ($match) {
+                self::update_status($transaction->id, $status);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * Get user transactions
      */
     public static function get_user_transactions($user_id, $limit = 20, $offset = 0) {
@@ -154,6 +193,9 @@ class GSP_Transactions {
             array('id' => $deposit_id)
         );
         
+        // Update the corresponding transaction record status
+        self::update_status_by_type($deposit->user_id, 'deposit', $deposit_id, $status);
+        
         // If approved, update user balance
         if ($status === 'approved') {
             GSP_User::update_wallet_balance($deposit->user_id, $deposit->amount, 'add');
@@ -240,6 +282,9 @@ class GSP_Transactions {
                     array('id' => $withdrawal_id)
                 );
                 
+                // Update the corresponding transaction record status
+                self::update_status_by_type($withdrawal->user_id, 'withdrawal', $withdrawal_id, 'declined');
+                
                 $user = get_userdata($withdrawal->user_id);
                 if ($user) {
                     GSP_Email::send_withdrawal_status($user->user_email, 'declined', $withdrawal->amount);
@@ -256,6 +301,9 @@ class GSP_Transactions {
             ),
             array('id' => $withdrawal_id)
         );
+        
+        // Update the corresponding transaction record status
+        self::update_status_by_type($withdrawal->user_id, 'withdrawal', $withdrawal_id, $status);
         
         // If approved, deduct from user balance
         if ($status === 'approved') {
@@ -350,6 +398,9 @@ class GSP_Transactions {
                     array('id' => $transfer_id)
                 );
                 
+                // Update the corresponding transaction record status
+                self::update_status_by_type($transfer->from_user_id, 'transfer_out', $transfer_id, 'declined');
+                
                 $from_user = get_userdata($transfer->from_user_id);
                 if ($from_user) {
                     GSP_Email::send_transfer_status($from_user->user_email, 'declined', $transfer->amount, 'sender');
@@ -371,16 +422,25 @@ class GSP_Transactions {
                     array('id' => $transfer_id)
                 );
                 
+                // Update the corresponding transaction record status for sender
+                self::update_status_by_type($transfer->from_user_id, 'transfer_out', $transfer_id, $status);
+                
                 // Deduct from sender
                 GSP_User::update_wallet_balance($transfer->from_user_id, $transfer->amount, 'subtract');
                 
                 // Add to receiver
                 GSP_User::update_wallet_balance($transfer->to_user_id, $transfer->amount, 'add');
                 
-                // Create incoming transaction for receiver
-                self::create($transfer->to_user_id, 'transfer_in', $transfer->amount, array(
-                    'transfer_id' => $transfer_id,
-                    'from_user_id' => $transfer->from_user_id
+                // Create incoming transaction for receiver (already with approved status)
+                $wpdb->insert($wpdb->prefix . 'gsp_transactions', array(
+                    'user_id' => $transfer->to_user_id,
+                    'type' => 'transfer_in',
+                    'amount' => $transfer->amount,
+                    'status' => 'approved',
+                    'details' => maybe_serialize(array(
+                        'transfer_id' => $transfer_id,
+                        'from_user_id' => $transfer->from_user_id
+                    ))
                 ));
                 
                 $wpdb->query('COMMIT');
@@ -398,6 +458,9 @@ class GSP_Transactions {
                 ),
                 array('id' => $transfer_id)
             );
+            
+            // Update the corresponding transaction record status
+            self::update_status_by_type($transfer->from_user_id, 'transfer_out', $transfer_id, $status);
         }
         
         // Send email notifications
@@ -500,6 +563,9 @@ class GSP_Transactions {
                     array('id' => $conversion_id)
                 );
                 
+                // Update the corresponding transaction record status
+                self::update_status_by_type($conversion->user_id, 'conversion_' . $conversion->conversion_type, $conversion_id, 'declined');
+                
                 GSP_Email::send_conversion_status($conversion->email, 'declined', $conversion->amount, $conversion->conversion_type);
                 return false;
             }
@@ -513,6 +579,9 @@ class GSP_Transactions {
             ),
             array('id' => $conversion_id)
         );
+        
+        // Update the corresponding transaction record status
+        self::update_status_by_type($conversion->user_id, 'conversion_' . $conversion->conversion_type, $conversion_id, $status);
         
         // If approved, deduct from user balance
         if ($status === 'approved') {
