@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('./middleware/rateLimit');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -15,10 +16,27 @@ require('../database/init');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting middleware
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per 15 minutes
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5 // limit each IP to 5 login attempts per 15 minutes
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Apply rate limiting to all API routes
+app.use('/api', apiLimiter);
+
+// Apply stricter rate limiting to authentication routes
+app.use('/api/auth/login', authLimiter);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));

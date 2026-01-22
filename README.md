@@ -158,10 +158,12 @@ Edit the `.env` file to configure:
 - Input validation
 - File upload restrictions (MIME type and size validation)
 - Secure API endpoints
+- Rate limiting (100 requests per 15 minutes per IP for API, 5 login attempts per 15 minutes)
 
 **Note on Dependencies:**
 - Multer 1.x is used for file uploads. For production, consider upgrading to Multer 2.x when available to address known security vulnerabilities.
 - Default admin password is `admin123` - **MUST be changed in production**
+- Basic in-memory rate limiting is implemented. For production, consider using `express-rate-limit` with Redis for distributed rate limiting.
 
 ## Email Notifications
 Users receive email notifications for:
@@ -177,6 +179,20 @@ Users receive email notifications for:
 - `withdrawal_requests` - Withdrawal requests
 - `conversion_requests` - Crypto and bank conversion requests
 - `admin_settings` - Configurable admin settings
+
+## Production Security Checklist
+
+⚠️ **IMPORTANT FOR PRODUCTION:**
+- [ ] Change the default admin password immediately
+- [ ] Configure email settings in `.env`
+- [ ] Use environment-specific secrets for JWT and sessions
+- [ ] Consider upgrading Multer to 2.x when available
+- [ ] Upgrade to distributed rate limiting with Redis for multi-server deployments
+- [ ] Set up proper SSL/TLS certificates
+- [ ] Use a production-grade database (PostgreSQL/MySQL) instead of SQLite
+- [ ] Implement proper logging and monitoring
+- [ ] Add CSRF protection for state-changing operations
+- [ ] Enable helmet.js for additional HTTP security headers
 
 ## License
 ISC
