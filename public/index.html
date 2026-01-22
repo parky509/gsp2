@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GlobalSwiftPay2 Investment Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card glass">
+            <h1 class="login-title">GlobalSwiftPay2</h1>
+            <p class="text-center mb-20" style="color: var(--text-secondary);">Investment Dashboard</p>
+            
+            <div id="alert" class="hidden"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+            
+            <div class="text-center mt-20" style="color: var(--text-secondary); font-size: 14px;">
+                <p>Demo Accounts:</p>
+                <p><strong>User:</strong> testuser / test123</p>
+                <p><strong>Admin:</strong> admin / admin123</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+</body>
+</html>
