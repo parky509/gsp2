@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - GlobalSwiftPay2</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header glass">
+            <div class="header-left">
+                <div class="profile-picture">A</div>
+                <div class="username" id="adminUsername">Admin</div>
+            </div>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Admin Tabs -->
+        <div class="admin-tabs">
+            <button class="tab-btn glass active" onclick="switchTab('settings')">Settings</button>
+            <button class="tab-btn glass" onclick="switchTab('addBalance')">Add Balance Requests</button>
+            <button class="tab-btn glass" onclick="switchTab('transfers')">Transfer Requests</button>
+            <button class="tab-btn glass" onclick="switchTab('withdrawals')">Withdrawal Requests</button>
+            <button class="tab-btn glass" onclick="switchTab('conversions')">Conversion Requests</button>
+            <button class="tab-btn glass" onclick="switchTab('users')">Users</button>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content glass active">
+            <h2 class="section-title">Admin Settings</h2>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label class="form-label" for="accountNumber">Account Number</label>
+                    <input type="text" id="accountNumber" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="btcAddress">BTC Address</label>
+                    <input type="text" id="btcAddress" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="usdtAddress">USDT Address</label>
+                    <input type="text" id="usdtAddress" class="form-input">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Settings</button>
+            </form>
+        </div>
+
+        <!-- Add Balance Requests Tab -->
+        <div id="addBalanceTab" class="tab-content glass">
+            <h2 class="section-title">Add Balance Requests</h2>
+            <div id="addBalanceList">
+                <!-- Requests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Transfer Requests Tab -->
+        <div id="transfersTab" class="tab-content glass">
+            <h2 class="section-title">Transfer Requests</h2>
+            <div id="transfersList">
+                <!-- Requests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Withdrawal Requests Tab -->
+        <div id="withdrawalsTab" class="tab-content glass">
+            <h2 class="section-title">Withdrawal Requests</h2>
+            <div id="withdrawalsList">
+                <!-- Requests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Conversion Requests Tab -->
+        <div id="conversionsTab" class="tab-content glass">
+            <h2 class="section-title">Conversion Requests</h2>
+            <div id="conversionsList">
+                <!-- Requests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="usersTab" class="tab-content glass">
+            <h2 class="section-title">Users</h2>
+            <div id="usersList">
+                <!-- Users will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Amount Input Modal (for add balance approvals) -->
+    <div id="amountModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Enter Amount</h2>
+                <button class="close-btn" onclick="closeModal('amountModal')">&times;</button>
+            </div>
+            <form id="amountForm">
+                <div class="form-group">
+                    <label class="form-label" for="approvalAmount">Amount to Add ($) *</label>
+                    <input type="number" id="approvalAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Confirm Approval</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

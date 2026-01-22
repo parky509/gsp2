@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - GlobalSwiftPay2</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header glass">
+            <div class="header-left">
+                <div class="profile-picture" id="profilePicture"></div>
+                <div class="username" id="username"></div>
+            </div>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Wallet Balance -->
+        <div class="dashboard">
+            <div class="card glass">
+                <div class="card-title">Wallet Balance</div>
+                <div class="card-value" id="balance">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="buttons-grid">
+            <div class="action-btn glass" onclick="openModal('depositModal')">
+                💰 Deposit
+            </div>
+            <div class="action-btn glass" onclick="viewBalance()">
+                💳 Savings
+            </div>
+            <div class="action-btn glass" onclick="openModal('btcModal')">
+                ₿ Convert to BTC
+            </div>
+            <div class="action-btn glass" onclick="openModal('usdtModal')">
+                💵 Convert to USDT
+            </div>
+            <div class="action-btn glass" onclick="openModal('bankModal')">
+                🏦 Convert to Bank
+            </div>
+            <div class="action-btn glass" onclick="openModal('addBalanceModal')">
+                ➕ Add Balance
+            </div>
+            <div class="action-btn glass" onclick="openModal('transferModal')">
+                🔄 Transfer
+            </div>
+            <div class="action-btn glass" onclick="openModal('withdrawModal')">
+                💸 Withdraw
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-section glass">
+            <h2 class="section-title">Transaction History</h2>
+            <div id="transactionList" class="transaction-list">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Deposit</h2>
+                <button class="close-btn" onclick="closeModal('depositModal')">&times;</button>
+            </div>
+            <form id="depositForm">
+                <div class="form-group">
+                    <label class="form-label" for="depositName">Name *</label>
+                    <input type="text" id="depositName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="depositEmail">Email *</label>
+                    <input type="email" id="depositEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="depositAmount">Amount ($) *</label>
+                    <input type="number" id="depositAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Deposit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BTC Conversion Modal -->
+    <div id="btcModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Convert to Bitcoin</h2>
+                <button class="close-btn" onclick="closeModal('btcModal')">&times;</button>
+            </div>
+            <form id="btcForm">
+                <div class="form-group">
+                    <label class="form-label" for="btcEmail">Email *</label>
+                    <input type="email" id="btcEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="btcAmount">Amount to Convert ($) *</label>
+                    <input type="number" id="btcAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="btcAddress">Bitcoin Address *</label>
+                    <input type="text" id="btcAddress" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="btcPhrase">Security Phrase *</label>
+                    <input type="password" id="btcPhrase" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Conversion</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- USDT Conversion Modal -->
+    <div id="usdtModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Convert to USDT (Tether)</h2>
+                <button class="close-btn" onclick="closeModal('usdtModal')">&times;</button>
+            </div>
+            <form id="usdtForm">
+                <div class="form-group">
+                    <label class="form-label" for="usdtEmail">Email *</label>
+                    <input type="email" id="usdtEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="usdtAmount">Amount to Convert ($) *</label>
+                    <input type="number" id="usdtAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="usdtAddress">USDT Address *</label>
+                    <input type="text" id="usdtAddress" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="usdtPhrase">Security Phrase *</label>
+                    <input type="password" id="usdtPhrase" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Conversion</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bank Conversion Modal -->
+    <div id="bankModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Convert to Bank</h2>
+                <button class="close-btn" onclick="closeModal('bankModal')">&times;</button>
+            </div>
+            <form id="bankForm">
+                <div class="form-group">
+                    <label class="form-label" for="bankEmail">Email *</label>
+                    <input type="email" id="bankEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bankAmount">Amount ($) *</label>
+                    <input type="number" id="bankAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bankName">Bank Name *</label>
+                    <input type="text" id="bankName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="accountName">Account Name *</label>
+                    <input type="text" id="accountName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="accountNumber">Account Number *</label>
+                    <input type="text" id="accountNumber" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="routingNumber">SWIFT/IFSC/Routing No/Sort Code/IBAN *</label>
+                    <input type="text" id="routingNumber" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bankAddress">Bank Address *</label>
+                    <textarea id="bankAddress" class="form-textarea" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="country">Country *</label>
+                    <input type="text" id="country" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bankPhrase">Security Phrase *</label>
+                    <input type="password" id="bankPhrase" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Conversion</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Balance Modal -->
+    <div id="addBalanceModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Balance</h2>
+                <button class="close-btn" onclick="closeModal('addBalanceModal')">&times;</button>
+            </div>
+            <div class="alert alert-info">
+                <strong>Account Number:</strong> <span id="adminAccountNumber">Loading...</span>
+            </div>
+            <form id="addBalanceForm">
+                <div class="form-group">
+                    <label class="form-label">Upload Receipt (PDF/PNG/JPEG) *</label>
+                    <div class="file-upload" onclick="document.getElementById('receipt').click()">
+                        <input type="file" id="receipt" accept=".pdf,.png,.jpg,.jpeg" required>
+                        <p>Click to upload receipt</p>
+                        <p id="fileName" style="color: var(--primary-color); margin-top: 10px;"></p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="senderName">Sender Name *</label>
+                    <input type="text" id="senderName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="senderEmail">Sender Email *</label>
+                    <input type="email" id="senderEmail" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Transfer to User</h2>
+                <button class="close-btn" onclick="closeModal('transferModal')">&times;</button>
+            </div>
+            <form id="transferForm">
+                <div class="form-group">
+                    <label class="form-label" for="recipientUsername">Recipient Username *</label>
+                    <input type="text" id="recipientUsername" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="transferAmount">Amount ($) *</label>
+                    <input type="number" id="transferAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tokenCode">Token Code *</label>
+                    <input type="text" id="tokenCode" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Transfer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 class="modal-title">Withdraw Funds</h2>
+                <button class="close-btn" onclick="closeModal('withdrawModal')">&times;</button>
+            </div>
+            <form id="withdrawForm">
+                <div class="form-group">
+                    <label class="form-label" for="withdrawAmount">Amount ($) *</label>
+                    <input type="number" id="withdrawAmount" class="form-input" min="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="withdrawDetails">Withdrawal Details *</label>
+                    <textarea id="withdrawDetails" class="form-textarea" placeholder="Enter your withdrawal details..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Withdrawal</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
