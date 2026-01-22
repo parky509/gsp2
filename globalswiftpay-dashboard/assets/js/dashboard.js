@@ -1,5 +1,6 @@
 /**
  * GlobalSwiftPay Dashboard - Main JavaScript
+ * Rebuilt with improved real-time syncing
  */
 
 (function($) {
@@ -57,6 +58,130 @@
                     });
                 }
             });
+        }
+    };
+
+    // Dashboard data handler - responsible for real-time updates
+    const Dashboard = {
+        refreshInterval: null,
+        
+        init: function() {
+            // Initial load
+            this.refresh();
+            
+            // Set up auto-refresh every 10 seconds for real-time updates
+            this.refreshInterval = setInterval(function() {
+                Dashboard.refresh();
+            }, 10000);
+        },
+        
+        refresh: function() {
+            // Refresh both balance and transactions
+            this.refreshBalance();
+            this.refreshTransactions();
+        },
+        
+        refreshBalance: function() {
+            $.ajax({
+                url: gsp_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'gsp_get_balance',
+                    nonce: gsp_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update balance displays with animation
+                        const walletEl = $('#gsp-wallet-balance');
+                        const savingsEl = $('#gsp-savings-balance');
+                        
+                        const newWallet = '$' + response.data.wallet_balance;
+                        const newSavings = '$' + response.data.savings_balance;
+                        
+                        if (walletEl.text() !== newWallet) {
+                            walletEl.addClass('gsp-balance-updated');
+                            walletEl.text(newWallet);
+                            setTimeout(function() {
+                                walletEl.removeClass('gsp-balance-updated');
+                            }, 1000);
+                        }
+                        
+                        if (savingsEl.text() !== newSavings) {
+                            savingsEl.addClass('gsp-balance-updated');
+                            savingsEl.text(newSavings);
+                            setTimeout(function() {
+                                savingsEl.removeClass('gsp-balance-updated');
+                            }, 1000);
+                        }
+                    }
+                }
+            });
+        },
+        
+        refreshTransactions: function() {
+            $.ajax({
+                url: gsp_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'gsp_get_transactions',
+                    nonce: gsp_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.data.transactions) {
+                        Dashboard.updateTransactionsTable(response.data.transactions);
+                    }
+                }
+            });
+        },
+        
+        updateTransactionsTable: function(transactions) {
+            const $tbody = $('#gsp-transactions-table tbody');
+            
+            if (transactions.length === 0) {
+                $tbody.html('<tr><td colspan="4" class="gsp-no-transactions">No transactions yet.</td></tr>');
+                return;
+            }
+            
+            let newHtml = '';
+            
+            transactions.forEach(function(tx) {
+                const typeClass = 'gsp-type-' + tx.type.replace(/_/g, '-');
+                const statusClass = 'gsp-status-' + tx.status;
+                const date = new Date(tx.created_at);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+                
+                // Format transaction type for display
+                let typeDisplay = tx.type.replace(/_/g, ' ');
+                typeDisplay = typeDisplay.split(' ').map(function(word) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }).join(' ');
+                
+                // Format status display
+                const statusDisplay = tx.status.charAt(0).toUpperCase() + tx.status.slice(1);
+                
+                newHtml += '<tr data-tx-id="' + tx.id + '">' +
+                    '<td>' +
+                        '<span class="gsp-transaction-type ' + typeClass + '">' +
+                            typeDisplay +
+                        '</span>' +
+                    '</td>' +
+                    '<td class="gsp-transaction-amount">$' + parseFloat(tx.amount).toFixed(2) + '</td>' +
+                    '<td>' +
+                        '<span class="gsp-status ' + statusClass + '">' +
+                            statusDisplay +
+                        '</span>' +
+                    '</td>' +
+                    '<td class="gsp-transaction-date">' + formattedDate + '</td>' +
+                '</tr>';
+            });
+            
+            $tbody.html(newHtml);
         }
     };
 
@@ -143,7 +268,8 @@
                     if (response.success) {
                         Toast.show(response.data.message, 'success');
                         Modal.close($form.closest('.gsp-modal'));
-                        Forms.refreshTransactions();
+                        // Immediate refresh for real-time feel
+                        Dashboard.refresh();
                     } else {
                         Toast.show(response.data.message, 'error');
                     }
@@ -174,7 +300,7 @@
                     if (response.success) {
                         Toast.show(response.data.message, 'success');
                         Modal.close($form.closest('.gsp-modal'));
-                        Forms.refreshTransactions();
+                        Dashboard.refresh();
                     } else {
                         Toast.show(response.data.message, 'error');
                     }
@@ -213,8 +339,7 @@
                     if (response.success) {
                         Toast.show(response.data.message, 'success');
                         Modal.close($form.closest('.gsp-modal'));
-                        Forms.refreshTransactions();
-                        Forms.refreshBalance();
+                        Dashboard.refresh();
                     } else {
                         Toast.show(response.data.message, 'error');
                     }
@@ -245,8 +370,7 @@
                     if (response.success) {
                         Toast.show(response.data.message, 'success');
                         Modal.close($form.closest('.gsp-modal'));
-                        Forms.refreshTransactions();
-                        Forms.refreshBalance();
+                        Dashboard.refresh();
                     } else {
                         Toast.show(response.data.message, 'error');
                     }
@@ -294,8 +418,7 @@
                     if (response.success) {
                         Toast.show(response.data.message, 'success');
                         Modal.close($form.closest('.gsp-modal'));
-                        Forms.refreshTransactions();
-                        Forms.refreshBalance();
+                        Dashboard.refresh();
                     } else {
                         Toast.show(response.data.message, 'error');
                     }
@@ -304,81 +427,6 @@
                     $btn.removeClass('loading');
                     Toast.show('An error occurred. Please try again.', 'error');
                 }
-            });
-        },
-        
-        refreshTransactions: function() {
-            $.ajax({
-                url: gsp_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'gsp_get_transactions',
-                    nonce: gsp_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success && response.data.transactions) {
-                        Forms.updateTransactionsTable(response.data.transactions);
-                    }
-                }
-            });
-        },
-        
-        refreshBalance: function() {
-            $.ajax({
-                url: gsp_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'gsp_get_balance',
-                    nonce: gsp_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#gsp-wallet-balance').text('$' + response.data.wallet_balance);
-                        $('#gsp-savings-balance').text('$' + response.data.savings_balance);
-                    }
-                }
-            });
-        },
-        
-        updateTransactionsTable: function(transactions) {
-            const $tbody = $('#gsp-transactions-table tbody');
-            $tbody.empty();
-            
-            if (transactions.length === 0) {
-                $tbody.append('<tr><td colspan="4" class="gsp-no-transactions">No transactions yet.</td></tr>');
-                return;
-            }
-            
-            transactions.forEach(function(tx) {
-                const typeClass = 'gsp-type-' + tx.type.replace(/_/g, '-');
-                const statusClass = 'gsp-status-' + tx.status;
-                const date = new Date(tx.created_at);
-                const formattedDate = date.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                });
-                
-                const row = `
-                    <tr>
-                        <td>
-                            <span class="gsp-transaction-type ${typeClass}">
-                                ${tx.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                        </td>
-                        <td class="gsp-transaction-amount">$${parseFloat(tx.amount).toFixed(2)}</td>
-                        <td>
-                            <span class="gsp-status ${statusClass}">
-                                ${tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                            </span>
-                        </td>
-                        <td class="gsp-transaction-date">${formattedDate}</td>
-                    </tr>
-                `;
-                
-                $tbody.append(row);
             });
         }
     };
@@ -404,11 +452,7 @@
         Modal.init();
         Forms.init();
         Clipboard.init();
-        
-        // Auto-refresh balance every 30 seconds
-        setInterval(function() {
-            Forms.refreshBalance();
-        }, 30000);
+        Dashboard.init();
     });
 
 })(jQuery);
