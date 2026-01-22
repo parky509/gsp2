@@ -1,0 +1,394 @@
+/**
+ * GlobalSwiftPay2 Investment Dashboard Styles
+ * Glass Morphism Theme with Crystal Blue and Ash Background
+ */
+
+/* Reset and Base Styles */
+.gsp2-dashboard-wrapper {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f5f5f5; /* Ash background */
+    min-height: 100vh;
+}
+
+.gsp2-dashboard-wrapper * {
+    box-sizing: border-box;
+}
+
+/* Header */
+.gsp2-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.gsp2-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.gsp2-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #00a8ff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.gsp2-username {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.gsp2-logout-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+
+.gsp2-logout-btn:hover {
+    background: #ff3838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+}
+
+/* Balance Card */
+.gsp2-balance-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+}
+
+.gsp2-balance-label {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gsp2-balance-amount {
+    font-size: 48px;
+    font-weight: 700;
+    color: #00a8ff;
+    text-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
+}
+
+/* Action Buttons Grid */
+.gsp2-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.gsp2-action-btn {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.gsp2-action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 168, 255, 0.2);
+    background: rgba(0, 168, 255, 0.1);
+    border-color: #00a8ff;
+}
+
+.gsp2-icon {
+    width: 32px;
+    height: 32px;
+    color: #00a8ff;
+    transition: all 0.3s ease;
+}
+
+.gsp2-action-btn:hover .gsp2-icon {
+    transform: scale(1.1);
+}
+
+/* Transaction History */
+.gsp2-transactions-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.gsp2-transactions-card h3 {
+    font-size: 24px;
+    color: #00a8ff;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.gsp2-no-transactions {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
+    font-size: 16px;
+}
+
+.gsp2-transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.gsp2-transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.gsp2-transaction-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(5px);
+}
+
+.gsp2-transaction-type {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    text-transform: capitalize;
+}
+
+.gsp2-transaction-date {
+    font-size: 13px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.gsp2-transaction-amount {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.gsp2-transaction-amount.positive {
+    color: #2ecc71;
+}
+
+.gsp2-transaction-amount.negative {
+    color: #e74c3c;
+}
+
+/* Modal Styles */
+.gsp2-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+}
+
+.gsp2-modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    margin: 5% auto;
+    padding: 40px;
+    border-radius: 25px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gsp2-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    line-height: 1;
+    margin-top: -10px;
+}
+
+.gsp2-modal-close:hover {
+    color: #000;
+    transform: scale(1.2);
+}
+
+.gsp2-modal h2 {
+    color: #00a8ff;
+    margin-bottom: 25px;
+    font-size: 28px;
+}
+
+.gsp2-form-group {
+    margin-bottom: 20px;
+}
+
+.gsp2-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.gsp2-form-group input,
+.gsp2-form-group select,
+.gsp2-form-group textarea {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid rgba(0, 168, 255, 0.2);
+    border-radius: 12px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s;
+}
+
+.gsp2-form-group input:focus,
+.gsp2-form-group select:focus,
+.gsp2-form-group textarea:focus {
+    outline: none;
+    border-color: #00a8ff;
+    box-shadow: 0 0 15px rgba(0, 168, 255, 0.2);
+}
+
+.gsp2-submit-btn {
+    background: #00a8ff;
+    color: white;
+    border: none;
+    padding: 16px 40px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 168, 255, 0.3);
+}
+
+.gsp2-submit-btn:hover {
+    background: #0096e0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 168, 255, 0.4);
+}
+
+.gsp2-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Admin Styles */
+.wrap.gsp2-admin-page {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.gsp2-admin-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.gsp2-admin-tab {
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.gsp2-admin-tab.active {
+    background: #00a8ff;
+    color: white;
+    border-color: #00a8ff;
+}
+
+.gsp2-admin-tab:hover:not(.active) {
+    border-color: #00a8ff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .gsp2-actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .gsp2-action-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .gsp2-balance-amount {
+        font-size: 36px;
+    }
+
+    .gsp2-modal-content {
+        width: 95%;
+        padding: 25px;
+    }
+}
