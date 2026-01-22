@@ -57,11 +57,7 @@ class GSP2_Investment_Dashboard {
      * Initialize WordPress hooks
      */
     private function init_hooks() {
-        // Load dependencies first before registering activation hook
-        add_action('plugins_loaded', array($this, 'plugins_loaded_handler'), 5);
-        
-        register_activation_hook(__FILE__, array('GSP2_Investment_Dashboard', 'activate_plugin'));
-        register_deactivation_hook(__FILE__, array('GSP2_Investment_Dashboard', 'deactivate_plugin'));
+        add_action('plugins_loaded', array($this, 'plugins_loaded_handler'), 10);
     }
     
     /**
@@ -82,35 +78,30 @@ class GSP2_Investment_Dashboard {
      * Load plugin dependencies
      */
     private function load_dependencies() {
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-database.php';
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-user.php';
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-transaction.php';
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-admin.php';
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-email.php';
-        require_once GSP2_PLUGIN_DIR . 'includes/class-gsp2-shortcodes.php';
+        $includes = array(
+            'includes/class-gsp2-database.php',
+            'includes/class-gsp2-user.php',
+            'includes/class-gsp2-transaction.php',
+            'includes/class-gsp2-admin.php',
+            'includes/class-gsp2-email.php',
+            'includes/class-gsp2-shortcodes.php',
+        );
+        
+        foreach ($includes as $file) {
+            $filepath = GSP2_PLUGIN_DIR . $file;
+            if (file_exists($filepath)) {
+                require_once $filepath;
+            }
+        }
     }
     
     /**
-     * Plugin activation - static method
+     * Plugin activation - removed (now handled by global function)
      */
-    public static function activate_plugin() {
-        // Load dependencies
-        require_once plugin_dir_path(__FILE__) . 'includes/class-gsp2-database.php';
-        
-        // Create tables
-        GSP2_Database::create_tables();
-        GSP2_Database::insert_default_data();
-        
-        // Flush rewrite rules
-        flush_rewrite_rules();
-    }
     
     /**
-     * Plugin deactivation - static method
+     * Plugin deactivation - removed (now handled by global function)
      */
-    public static function deactivate_plugin() {
-        flush_rewrite_rules();
-    }
     
     /**
      * Load plugin text domain for translations
@@ -364,6 +355,25 @@ class GSP2_Investment_Dashboard {
         }
     }
 }
+
+/**
+ * Plugin activation hook
+ */
+function gsp2_activate_plugin() {
+    require_once plugin_dir_path(__FILE__) . 'includes/class-gsp2-database.php';
+    GSP2_Database::create_tables();
+    GSP2_Database::insert_default_data();
+    flush_rewrite_rules();
+}
+register_activation_hook(__FILE__, 'gsp2_activate_plugin');
+
+/**
+ * Plugin deactivation hook
+ */
+function gsp2_deactivate_plugin() {
+    flush_rewrite_rules();
+}
+register_deactivation_hook(__FILE__, 'gsp2_deactivate_plugin');
 
 /**
  * Initialize the plugin
