@@ -5,15 +5,15 @@ A comprehensive investment dashboard plugin for GlobalSwiftPay2.com with modern 
 ## Features
 
 ### User Dashboard
-- 💰 Real-time wallet balance display
+- Real-time wallet balance display
 - 📥 Deposit functionality
-- 💳 Savings view
-- ₿ Convert to Bitcoin (BTC)
-- 💵 Convert to USDT (Tether)
-- 🏦 Convert to Bank account
-- ➕ Add balance with receipt upload
-- 🔄 Transfer funds to other users
-- 💸 Withdraw funds
+- Savings view
+- Convert to Bitcoin (BTC)
+- Convert to USDT (Tether)
+- Convert to Bank account
+- Add balance with receipt upload
+- Transfer funds to other users
+- Withdraw funds
 - 📊 Transaction history with real-time updates
 
 ### Admin Dashboard
