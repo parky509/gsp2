@@ -156,8 +156,12 @@ Edit the `.env` file to configure:
 - JWT authentication
 - Session management
 - Input validation
-- File upload restrictions
+- File upload restrictions (MIME type and size validation)
 - Secure API endpoints
+
+**Note on Dependencies:**
+- Multer 1.x is used for file uploads. For production, consider upgrading to Multer 2.x when available to address known security vulnerabilities.
+- Default admin password is `admin123` - **MUST be changed in production**
 
 ## Email Notifications
 Users receive email notifications for:

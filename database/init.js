@@ -134,11 +134,17 @@ function initDatabase() {
     stmt.finalize();
 
     // Create default admin user (username: admin, password: admin123)
+    // IMPORTANT: Change the admin password after first login in production!
     const adminPassword = bcrypt.hashSync('admin123', 10);
     db.run(`
       INSERT OR IGNORE INTO users (username, email, password, balance, is_admin)
       VALUES (?, ?, ?, ?, ?)
-    `, ['admin', 'admin@globalswiftpay2.com', adminPassword, 0, 1]);
+    `, ['admin', 'admin@globalswiftpay2.com', adminPassword, 0, 1], function(err) {
+      if (!err && this.changes > 0) {
+        console.warn('⚠️  WARNING: Default admin account created with password "admin123"');
+        console.warn('⚠️  IMPORTANT: Change this password immediately in production!');
+      }
+    });
 
     // Create default test user (username: testuser, password: test123)
     const userPassword = bcrypt.hashSync('test123', 10);

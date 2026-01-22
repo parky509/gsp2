@@ -101,8 +101,11 @@ router.post('/add-balance-requests/:id/:action', (req, res) => {
         }
 
         if (action === 'approve') {
-          // Get amount from sender_name or default to 0 (should be passed separately in production)
-          const amount = parseFloat(req.body.amount) || 0;
+          // Validate amount
+          const amount = parseFloat(req.body.amount);
+          if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ error: 'Valid amount required for approval' });
+          }
 
           db.run(
             'UPDATE users SET balance = balance + ? WHERE id = ?',
@@ -200,28 +203,45 @@ router.post('/transfer-requests/:id/:action', (req, res) => {
         }
 
         if (action === 'approve') {
-          // Deduct from sender and add to recipient
-          db.run('UPDATE users SET balance = balance - ? WHERE id = ?', [request.amount, request.from_user_id]);
-          db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [request.amount, request.to_user_id]);
+          // Execute transfer operations
+          // Note: SQLite doesn't support transactions in the same way, but we use serialization
+          db.serialize(() => {
+            db.run('UPDATE users SET balance = balance - ? WHERE id = ?', [request.amount, request.from_user_id], (err) => {
+              if (err) {
+                console.error('Error deducting balance:', err);
+                return res.status(500).json({ error: 'Error processing transfer' });
+              }
 
-          // Add transaction records
-          db.run(
-            'INSERT INTO transactions (user_id, type, amount, status, details) VALUES (?, ?, ?, ?, ?)',
-            [request.from_user_id, 'transfer_sent', request.amount, 'completed', JSON.stringify({ to: request.to_username, request_id: id })]
-          );
-          db.run(
-            'INSERT INTO transactions (user_id, type, amount, status, details) VALUES (?, ?, ?, ?, ?)',
-            [request.to_user_id, 'transfer_received', request.amount, 'completed', JSON.stringify({ from: request.from_username, request_id: id })]
-          );
+              db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [request.amount, request.to_user_id], (err) => {
+                if (err) {
+                  console.error('Error adding balance:', err);
+                  // Attempt to rollback by adding back to sender
+                  db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [request.amount, request.from_user_id]);
+                  return res.status(500).json({ error: 'Error processing transfer' });
+                }
 
-          // Send email notification
-          sendEmail(request.from_email, 'transferApproved', request.from_username, request.amount, request.to_username);
+                // Add transaction records for both users
+                db.run(
+                  'INSERT INTO transactions (user_id, type, amount, status, details) VALUES (?, ?, ?, ?, ?)',
+                  [request.from_user_id, 'transfer_sent', request.amount, 'completed', JSON.stringify({ to: request.to_username, request_id: id })]
+                );
+                db.run(
+                  'INSERT INTO transactions (user_id, type, amount, status, details) VALUES (?, ?, ?, ?, ?)',
+                  [request.to_user_id, 'transfer_received', request.amount, 'completed', JSON.stringify({ from: request.from_username, request_id: id })]
+                );
+
+                // Send email notification
+                sendEmail(request.from_email, 'transferApproved', request.from_username, request.amount, request.to_username);
+
+                res.json({ message: `Transfer request ${status}` });
+              });
+            });
+          });
         } else {
           // Send decline email
           sendEmail(request.from_email, 'transferDeclined', request.from_username, request.amount);
+          res.json({ message: `Transfer request ${status}` });
         }
-
-        res.json({ message: `Transfer request ${status}` });
       }
     );
   });
