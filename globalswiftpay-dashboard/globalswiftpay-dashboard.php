@@ -160,7 +160,19 @@ class GlobalSwiftPay_Dashboard {
     }
     
     public function redirect_after_logout() {
-        wp_redirect('https://globalswiftpay2.com');
+        // Get logout redirect URL from settings, with fallback to home
+        $logout_url = GSP_Database::get_setting('logout_redirect_url');
+        if (empty($logout_url)) {
+            $logout_url = 'https://globalswiftpay2.com';
+        }
+        
+        // Validate the URL
+        $logout_url = esc_url_raw($logout_url);
+        if (empty($logout_url)) {
+            $logout_url = home_url('/');
+        }
+        
+        wp_redirect($logout_url);
         exit;
     }
 }

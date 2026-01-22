@@ -226,6 +226,28 @@ class GSP_Transactions {
             return false;
         }
         
+        // If approving, verify user still has sufficient balance
+        if ($status === 'approved') {
+            $current_balance = GSP_User::get_balance($withdrawal->user_id);
+            if ($current_balance->wallet_balance < $withdrawal->amount) {
+                // Update status to declined due to insufficient funds
+                $wpdb->update(
+                    $table,
+                    array(
+                        'status' => 'declined',
+                        'admin_notes' => 'Insufficient funds at time of approval. User balance: $' . number_format($current_balance->wallet_balance, 2)
+                    ),
+                    array('id' => $withdrawal_id)
+                );
+                
+                $user = get_userdata($withdrawal->user_id);
+                if ($user) {
+                    GSP_Email::send_withdrawal_status($user->user_email, 'declined', $withdrawal->amount);
+                }
+                return false;
+            }
+        }
+        
         $wpdb->update(
             $table,
             array(
@@ -299,7 +321,7 @@ class GSP_Transactions {
     }
     
     /**
-     * Update transfer status
+     * Update transfer status with atomic transaction handling
      */
     public static function update_transfer_status($transfer_id, $status, $notes = '') {
         global $wpdb;
@@ -314,25 +336,68 @@ class GSP_Transactions {
             return false;
         }
         
-        $wpdb->update(
-            $table,
-            array(
-                'status' => $status,
-                'admin_notes' => $notes
-            ),
-            array('id' => $transfer_id)
-        );
-        
-        // If approved, process the transfer
+        // If approving, verify sender still has sufficient balance
         if ($status === 'approved') {
-            GSP_User::update_wallet_balance($transfer->from_user_id, $transfer->amount, 'subtract');
-            GSP_User::update_wallet_balance($transfer->to_user_id, $transfer->amount, 'add');
+            $sender_balance = GSP_User::get_balance($transfer->from_user_id);
+            if ($sender_balance->wallet_balance < $transfer->amount) {
+                // Update status to declined due to insufficient funds
+                $wpdb->update(
+                    $table,
+                    array(
+                        'status' => 'declined',
+                        'admin_notes' => 'Insufficient funds at time of approval. Sender balance: $' . number_format($sender_balance->wallet_balance, 2)
+                    ),
+                    array('id' => $transfer_id)
+                );
+                
+                $from_user = get_userdata($transfer->from_user_id);
+                if ($from_user) {
+                    GSP_Email::send_transfer_status($from_user->user_email, 'declined', $transfer->amount, 'sender');
+                }
+                return false;
+            }
             
-            // Create incoming transaction for receiver
-            self::create($transfer->to_user_id, 'transfer_in', $transfer->amount, array(
-                'transfer_id' => $transfer_id,
-                'from_user_id' => $transfer->from_user_id
-            ));
+            // Use database transaction for atomicity
+            $wpdb->query('START TRANSACTION');
+            
+            try {
+                // Update transfer status first
+                $wpdb->update(
+                    $table,
+                    array(
+                        'status' => $status,
+                        'admin_notes' => $notes
+                    ),
+                    array('id' => $transfer_id)
+                );
+                
+                // Deduct from sender
+                GSP_User::update_wallet_balance($transfer->from_user_id, $transfer->amount, 'subtract');
+                
+                // Add to receiver
+                GSP_User::update_wallet_balance($transfer->to_user_id, $transfer->amount, 'add');
+                
+                // Create incoming transaction for receiver
+                self::create($transfer->to_user_id, 'transfer_in', $transfer->amount, array(
+                    'transfer_id' => $transfer_id,
+                    'from_user_id' => $transfer->from_user_id
+                ));
+                
+                $wpdb->query('COMMIT');
+            } catch (Exception $e) {
+                $wpdb->query('ROLLBACK');
+                return false;
+            }
+        } else {
+            // For declined status, just update the record
+            $wpdb->update(
+                $table,
+                array(
+                    'status' => $status,
+                    'admin_notes' => $notes
+                ),
+                array('id' => $transfer_id)
+            );
         }
         
         // Send email notifications
@@ -419,6 +484,25 @@ class GSP_Transactions {
         
         if (!$conversion) {
             return false;
+        }
+        
+        // If approving, verify user still has sufficient balance
+        if ($status === 'approved') {
+            $current_balance = GSP_User::get_balance($conversion->user_id);
+            if ($current_balance->wallet_balance < $conversion->amount) {
+                // Update status to declined due to insufficient funds
+                $wpdb->update(
+                    $table,
+                    array(
+                        'status' => 'declined',
+                        'admin_notes' => 'Insufficient funds at time of approval. User balance: $' . number_format($current_balance->wallet_balance, 2)
+                    ),
+                    array('id' => $conversion_id)
+                );
+                
+                GSP_Email::send_conversion_status($conversion->email, 'declined', $conversion->amount, $conversion->conversion_type);
+                return false;
+            }
         }
         
         $wpdb->update(

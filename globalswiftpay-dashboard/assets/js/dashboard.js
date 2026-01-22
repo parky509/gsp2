@@ -198,9 +198,9 @@
                 details: {}
             };
             
-            // Get conditional details
+            // Get conditional details - use regex with global flag to replace all occurrences
             $form.find('[name^="details"]').each(function() {
-                const name = $(this).attr('name').replace('details[', '').replace(']', '');
+                const name = $(this).attr('name').replace(/details\[/g, '').replace(/\]/g, '');
                 formData.details[name] = $(this).val();
             });
             

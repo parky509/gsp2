@@ -150,19 +150,23 @@ class GSP_Database {
     
     /**
      * Insert default settings
+     * Note: Financial details are left empty for admin to configure securely
      */
     private static function insert_default_settings() {
         $defaults = array(
-            'account_number' => '1234567890',
-            'account_name' => 'GlobalSwiftPay Holdings',
-            'bank_name' => 'Chase Bank',
-            'btc_address' => 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-            'usdt_address' => 'TRC20: TN2LxxxxxxxxxxxxxxxxxxxxWRJ7dz',
-            'company_email' => 'support@globalswiftpay2.com'
+            'account_number' => '',
+            'account_name' => '',
+            'bank_name' => '',
+            'btc_address' => '',
+            'usdt_address' => '',
+            'company_email' => ''
         );
         
         foreach ($defaults as $key => $value) {
-            self::set_setting($key, $value);
+            // Only insert if setting doesn't already exist
+            if (self::get_setting($key) === null) {
+                self::set_setting($key, $value);
+            }
         }
     }
     

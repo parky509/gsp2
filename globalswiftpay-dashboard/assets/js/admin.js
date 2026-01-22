@@ -157,7 +157,8 @@
             
             const settings = {};
             $form.find('input[name^="settings"]').each(function() {
-                const name = $(this).attr('name').replace('settings[', '').replace(']', '');
+                // Use regex with global flag to replace all occurrences
+                const name = $(this).attr('name').replace(/settings\[/g, '').replace(/\]/g, '');
                 settings[name] = $(this).val();
             });
             

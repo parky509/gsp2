@@ -531,6 +531,16 @@ class GSP_Admin {
                         </div>
                     </div>
                     
+                    <div class="gsp-settings-section">
+                        <h2><?php esc_html_e('Site Settings', 'globalswiftpay-dashboard'); ?></h2>
+                        
+                        <div class="gsp-form-group">
+                            <label for="logout_redirect_url"><?php esc_html_e('Logout Redirect URL', 'globalswiftpay-dashboard'); ?></label>
+                            <input type="url" id="logout_redirect_url" name="settings[logout_redirect_url]" value="<?php echo esc_attr($settings['logout_redirect_url'] ?? 'https://globalswiftpay2.com'); ?>" class="gsp-input" placeholder="https://globalswiftpay2.com">
+                            <p class="gsp-settings-description"><?php esc_html_e('URL to redirect users after logout. Leave empty for site home page.', 'globalswiftpay-dashboard'); ?></p>
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="gsp-admin-btn gsp-btn-save"><?php esc_html_e('Save Settings', 'globalswiftpay-dashboard'); ?></button>
                 </form>
             </div>

@@ -108,21 +108,41 @@ class GSP_Ajax {
             wp_send_json_error(array('message' => 'All fields are required.'));
         }
         
-        // Handle file upload
+        // Handle file upload with enhanced security
         $receipt_path = '';
         if (!empty($_FILES['receipt']) && isset($_FILES['receipt']['tmp_name']) && $_FILES['receipt']['tmp_name'] !== '') {
             if (!function_exists('wp_handle_upload')) {
                 require_once(ABSPATH . 'wp-admin/includes/file.php');
             }
             
-            $allowed_types = array('image/jpeg', 'image/png', 'application/pdf');
-            $file_type = isset($_FILES['receipt']['type']) ? sanitize_mime_type($_FILES['receipt']['type']) : '';
+            // Maximum file size: 5MB
+            $max_file_size = 5 * 1024 * 1024;
+            if (isset($_FILES['receipt']['size']) && $_FILES['receipt']['size'] > $max_file_size) {
+                wp_send_json_error(array('message' => 'File size exceeds maximum limit of 5MB.'));
+            }
             
-            if (!in_array($file_type, $allowed_types, true)) {
+            // Validate file extension using wp_check_filetype
+            $allowed_extensions = array('jpg', 'jpeg', 'png', 'pdf');
+            $file_name = isset($_FILES['receipt']['name']) ? sanitize_file_name($_FILES['receipt']['name']) : '';
+            $file_info = wp_check_filetype($file_name, array(
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'pdf' => 'application/pdf'
+            ));
+            
+            if (!$file_info['ext'] || !in_array(strtolower($file_info['ext']), $allowed_extensions, true)) {
                 wp_send_json_error(array('message' => 'Invalid file type. Only PDF, PNG, and JPEG are allowed.'));
             }
             
-            $upload = wp_handle_upload($_FILES['receipt'], array('test_form' => false));
+            $upload = wp_handle_upload($_FILES['receipt'], array(
+                'test_form' => false,
+                'mimes' => array(
+                    'jpg|jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    'pdf' => 'application/pdf'
+                )
+            ));
             
             if (isset($upload['error'])) {
                 wp_send_json_error(array('message' => $upload['error']));
