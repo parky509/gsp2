@@ -1,6 +1,3 @@
-// API Base URL
-const API_BASE = window.location.origin;
-
 // Check authentication and load user data
 const user = checkAuth();
 
