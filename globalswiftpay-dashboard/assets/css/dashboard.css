@@ -138,6 +138,41 @@
     font-size: 18px;
 }
 
+/* SVG icon styling */
+.gsp-card-icon svg {
+    width: 32px;
+    height: 32px;
+    color: var(--gsp-white);
+}
+
+.gsp-btn-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--gsp-primary);
+    transition: var(--gsp-transition);
+}
+
+.gsp-glass-btn:hover .gsp-btn-icon {
+    color: var(--gsp-white);
+}
+
+.gsp-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.gsp-copy-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    opacity: 0.6;
+}
+
+.gsp-file-icon {
+    width: 24px;
+    height: 24px;
+}
+
 /* Balance Section */
 .gsp-balance-section {
     display: grid;

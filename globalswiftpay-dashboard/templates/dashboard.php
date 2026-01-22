@@ -32,7 +32,7 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
             </div>
             <div class="gsp-header-actions">
                 <a href="<?php echo esc_url(wp_logout_url('https://globalswiftpay2.com')); ?>" class="gsp-btn gsp-btn-logout">
-                    <span class="gsp-icon">⏻</span>
+                    <svg class="gsp-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M16.56 5.44l-1.45 1.45A5.969 5.969 0 0 1 18 12a6 6 0 0 1-6 6a6 6 0 0 1-6-6c0-2.17 1.16-4.06 2.88-5.12L7.44 5.44A7.961 7.961 0 0 0 4 12a8 8 0 0 0 8 8a8 8 0 0 0 8-8c0-2.72-1.36-5.12-3.44-6.56M13 3h-2v10h2"/></svg>
                     <?php esc_html_e('Logout', 'globalswiftpay-dashboard'); ?>
                 </a>
             </div>
@@ -43,7 +43,7 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
     <div class="gsp-balance-section">
         <div class="gsp-glass-card gsp-balance-card gsp-wallet-balance">
             <div class="gsp-card-icon">
-                <span>💰</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2m0-10h10v8H12m4 1a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 16 14a1.5 1.5 0 0 1 1.5 1.5A1.5 1.5 0 0 1 16 17"/></svg>
             </div>
             <div class="gsp-card-content">
                 <h3><?php esc_html_e('Wallet Balance', 'globalswiftpay-dashboard'); ?></h3>
@@ -53,7 +53,7 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
         
         <div class="gsp-glass-card gsp-balance-card gsp-savings-balance" id="savings-card">
             <div class="gsp-card-icon">
-                <span>🏦</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M11.5 1L2 6v2h19V6m-5 4v6h4v-6m-16 6v-6h4v6m2-6v6h4v-6M2 20v2h19v-2"/></svg>
             </div>
             <div class="gsp-card-content">
                 <h3><?php esc_html_e('Savings', 'globalswiftpay-dashboard'); ?></h3>
@@ -67,37 +67,37 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
         <h2 class="gsp-section-title"><?php esc_html_e('Quick Actions', 'globalswiftpay-dashboard'); ?></h2>
         <div class="gsp-actions-grid">
             <button class="gsp-glass-btn gsp-action-btn" data-modal="deposit-modal">
-                <span class="gsp-btn-icon">📥</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M3 6h18v12H3zm5 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1zm4-6h2v3h3l-4 4l-4-4h3z"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Deposit', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="add-balance-modal">
-                <span class="gsp-btn-icon">➕</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Add Balance', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="withdraw-modal">
-                <span class="gsp-btn-icon">📤</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M3 6h18v12H3zm5 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1zm7 11l4-4h-3v-3h-2v3H9z"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Withdraw', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="transfer-modal">
-                <span class="gsp-btn-icon">🔄</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M21 9l-4-4v3h-7v2h7v3M7 11l-4 4l4 4v-3h7v-2H7z"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Transfer', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="convert-btc-modal">
-                <span class="gsp-btn-icon">₿</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M14.24 10.56C13.93 11.8 12 12.06 11.4 11.9l.34-1.42c.61.14 1.52.28 1.5-.51c-.01-.77-.88-.62-1.18-.67l.36-1.43c.23.05.52.08.85.12c.63.07 1.12.4 1.03 1.07c.07 0 .13.01.2.02c.93.11 1.52.68 1.37 1.57c-.15.89-.83 1.44-1.63 1.44m.33-3.06c.14-.62-.39-.87-1.08-1.02l.22-.88l-.54-.13l-.21.85c-.14-.03-.29-.07-.44-.1l.21-.86l-.54-.13l-.22.88c-.12-.03-.23-.06-.34-.08l.01-.01l-.75-.18l-.14.57s.4.1.4.1c.22.05.26.2.25.31l-.26 1.02l.06.02l-.06-.01l-.36 1.43c-.02.09-.09.2-.24.17c.01.01-.4-.1-.4-.1l-.27.61l.7.17c.13.03.26.07.39.1l-.22.9l.54.13l.22-.88c.15.04.3.08.45.11l-.22.87l.54.14l.22-.9c.9.17 1.58.1 1.87-.72c.23-.66-.01-1.04-.49-1.29c.35-.08.61-.31.68-.78M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Convert to BTC', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="convert-usdt-modal">
-                <span class="gsp-btn-icon">💵</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3m0 14.2a7.2 7.2 0 0 1-6-3.22c.03-1.99 4-3.08 6-3.08c1.99 0 5.97 1.09 6 3.08a7.2 7.2 0 0 1-6 3.22"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Convert to USDT', 'globalswiftpay-dashboard'); ?></span>
             </button>
             
             <button class="gsp-glass-btn gsp-action-btn" data-modal="convert-bank-modal">
-                <span class="gsp-btn-icon">🏛️</span>
+                <svg class="gsp-btn-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M15 14v-3h3V9l4 3.5l-4 3.5v-2zm-1-6.3V9H2V7.7L8 4zM7 10h2v5H7zm-4 0h2v5H3zm10 0v2.5l-2 1.8V10zm-3.5 6l.5.5v1H2v-2h7.5zM14 16h8v2h-8z"/></svg>
                 <span class="gsp-btn-text"><?php esc_html_e('Convert to Bank', 'globalswiftpay-dashboard'); ?></span>
             </button>
         </div>
@@ -192,7 +192,7 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
             </div>
             <div class="gsp-detail-row">
                 <span class="gsp-detail-label"><?php esc_html_e('Account Number:', 'globalswiftpay-dashboard'); ?></span>
-                <span class="gsp-detail-value gsp-copy-text" data-copy="<?php echo esc_attr($settings['account_number'] ?? ''); ?>"><?php echo esc_html($settings['account_number'] ?? 'N/A'); ?> <span class="gsp-copy-icon">📋</span></span>
+                <span class="gsp-detail-value gsp-copy-text" data-copy="<?php echo esc_attr($settings['account_number'] ?? ''); ?>"><?php echo esc_html($settings['account_number'] ?? 'N/A'); ?> <svg class="gsp-copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12z"/></svg></span>
             </div>
         </div>
         
@@ -214,7 +214,7 @@ $display_name = $current_user->display_name ?: $current_user->user_login;
                 <div class="gsp-file-upload">
                     <input type="file" id="add-receipt" name="receipt" class="gsp-file-input" accept=".pdf,.png,.jpg,.jpeg">
                     <label for="add-receipt" class="gsp-file-label">
-                        <span class="gsp-file-icon">📎</span>
+                        <svg class="gsp-file-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6z"/></svg>
                         <span class="gsp-file-text"><?php esc_html_e('Choose file...', 'globalswiftpay-dashboard'); ?></span>
                     </label>
                 </div>
