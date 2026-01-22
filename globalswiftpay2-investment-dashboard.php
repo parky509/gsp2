@@ -57,10 +57,19 @@ class GSP2_Investment_Dashboard {
      * Initialize WordPress hooks
      */
     private function init_hooks() {
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        // Load dependencies first before registering activation hook
+        add_action('plugins_loaded', array($this, 'plugins_loaded_handler'), 5);
         
-        add_action('plugins_loaded', array($this, 'load_textdomain'));
+        register_activation_hook(__FILE__, array('GSP2_Investment_Dashboard', 'activate_plugin'));
+        register_deactivation_hook(__FILE__, array('GSP2_Investment_Dashboard', 'deactivate_plugin'));
+    }
+    
+    /**
+     * Handler for plugins_loaded action
+     */
+    public function plugins_loaded_handler() {
+        $this->load_textdomain();
+        
         add_action('init', array($this, 'init'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -82,18 +91,24 @@ class GSP2_Investment_Dashboard {
     }
     
     /**
-     * Plugin activation
+     * Plugin activation - static method
      */
-    public function activate() {
+    public static function activate_plugin() {
+        // Load dependencies
+        require_once plugin_dir_path(__FILE__) . 'includes/class-gsp2-database.php';
+        
+        // Create tables
         GSP2_Database::create_tables();
         GSP2_Database::insert_default_data();
+        
+        // Flush rewrite rules
         flush_rewrite_rules();
     }
     
     /**
-     * Plugin deactivation
+     * Plugin deactivation - static method
      */
-    public function deactivate() {
+    public static function deactivate_plugin() {
         flush_rewrite_rules();
     }
     
@@ -208,10 +223,12 @@ class GSP2_Investment_Dashboard {
     }
     
     /**
-     * Render admin dashboard
+     * Render admin dashboard - redirect to settings
      */
     public function render_admin_dashboard() {
-        include GSP2_PLUGIN_DIR . 'admin/views/dashboard.php';
+        // Redirect to settings page as we don't have a separate dashboard view
+        wp_redirect(admin_url('admin.php?page=gsp2-settings'));
+        exit;
     }
     
     /**
@@ -224,14 +241,14 @@ class GSP2_Investment_Dashboard {
         
         wp_enqueue_style(
             'gsp2-admin-style',
-            GSP2_PLUGIN_URL . 'assets/css/admin-style.css',
+            GSP2_PLUGIN_URL . 'assets/css/styles.css',
             array(),
             GSP2_VERSION
         );
         
         wp_enqueue_script(
             'gsp2-admin-script',
-            GSP2_PLUGIN_URL . 'assets/js/admin-script.js',
+            GSP2_PLUGIN_URL . 'assets/js/admin.js',
             array('jquery'),
             GSP2_VERSION,
             true
@@ -253,14 +270,14 @@ class GSP2_Investment_Dashboard {
     public function enqueue_frontend_assets() {
         wp_enqueue_style(
             'gsp2-frontend-style',
-            GSP2_PLUGIN_URL . 'assets/css/frontend-style.css',
+            GSP2_PLUGIN_URL . 'assets/css/styles.css',
             array(),
             GSP2_VERSION
         );
         
         wp_enqueue_script(
             'gsp2-frontend-script',
-            GSP2_PLUGIN_URL . 'assets/js/frontend-script.js',
+            GSP2_PLUGIN_URL . 'assets/js/dashboard.js',
             array('jquery'),
             GSP2_VERSION,
             true
