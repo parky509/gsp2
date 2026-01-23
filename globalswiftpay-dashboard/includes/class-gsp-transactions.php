@@ -1,7 +1,12 @@
 <?php
 /**
  * Transactions handler for GlobalSwiftPay Dashboard
- * Rebuilt for reliable transaction syncing and balance updates
+ * Completely rebuilt for reliable transaction syncing and balance updates
+ * 
+ * Key improvements:
+ * 1. Uses transaction_ref_id field for direct linking (no serialized lookups)
+ * 2. All balance updates and transaction syncs happen in same database transaction
+ * 3. Simplified status update flow
  */
 
 if (!defined('ABSPATH')) {
@@ -16,24 +21,21 @@ class GSP_Transactions {
      * @param int $user_id User ID
      * @param string $type Transaction type
      * @param float $amount Transaction amount
-     * @param array $details Additional details
-     * @param int $related_id Related record ID from parent table
+     * @param string $status Transaction status
+     * @param int $ref_id Reference ID to link to parent table (deposits, withdrawals, etc.)
+     * @param array $details Additional details (optional)
      * @return int Transaction ID
      */
-    public static function create($user_id, $type, $amount, $details = array(), $related_id = 0) {
+    public static function create($user_id, $type, $amount, $status = 'pending', $ref_id = 0, $details = array()) {
         global $wpdb;
         $table = $wpdb->prefix . 'gsp_transactions';
-        
-        // Store related_id in details for linking
-        if ($related_id > 0) {
-            $details['related_id'] = $related_id;
-        }
         
         $wpdb->insert($table, array(
             'user_id' => $user_id,
             'type' => $type,
-            'amount' => $amount,
-            'status' => 'pending',
+            'amount' => floatval($amount),
+            'status' => $status,
+            'ref_id' => $ref_id,
             'details' => maybe_serialize($details)
         ));
         
@@ -55,85 +57,25 @@ class GSP_Transactions {
     }
     
     /**
-     * Find and update transaction status by type and related ID
-     * This is the key function for syncing transaction records with their parent tables
+     * Update transaction status by type and reference ID
+     * This is the key function for syncing - uses direct ref_id lookup
      */
-    public static function sync_transaction_status($user_id, $type, $related_id, $status) {
+    public static function update_status_by_ref($type, $ref_id, $status) {
         global $wpdb;
         $table = $wpdb->prefix . 'gsp_transactions';
         
-        // Get all transactions for this user and type
-        $transactions = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, details FROM $table WHERE user_id = %d AND type = %s AND status = 'pending'",
-            $user_id,
-            $type
-        ));
-        
-        foreach ($transactions as $transaction) {
-            $details = maybe_unserialize($transaction->details);
-            
-            // Check multiple possible related ID keys
-            $match = false;
-            if (isset($details['related_id']) && intval($details['related_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['deposit_id']) && intval($details['deposit_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['withdrawal_id']) && intval($details['withdrawal_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['transfer_id']) && intval($details['transfer_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['conversion_id']) && intval($details['conversion_id']) === intval($related_id)) {
-                $match = true;
-            }
-            
-            if ($match) {
-                $wpdb->update(
-                    $table,
-                    array('status' => $status),
-                    array('id' => $transaction->id)
-                );
-                return true;
-            }
-        }
-        
-        // If no pending transaction found, check all transactions
-        $all_transactions = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, details FROM $table WHERE user_id = %d AND type = %s",
-            $user_id,
-            $type
-        ));
-        
-        foreach ($all_transactions as $transaction) {
-            $details = maybe_unserialize($transaction->details);
-            
-            $match = false;
-            if (isset($details['related_id']) && intval($details['related_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['deposit_id']) && intval($details['deposit_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['withdrawal_id']) && intval($details['withdrawal_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['transfer_id']) && intval($details['transfer_id']) === intval($related_id)) {
-                $match = true;
-            } elseif (isset($details['conversion_id']) && intval($details['conversion_id']) === intval($related_id)) {
-                $match = true;
-            }
-            
-            if ($match) {
-                $wpdb->update(
-                    $table,
-                    array('status' => $status),
-                    array('id' => $transaction->id)
-                );
-                return true;
-            }
-        }
-        
-        return false;
+        return $wpdb->update(
+            $table,
+            array('status' => $status),
+            array(
+                'type' => $type,
+                'ref_id' => $ref_id
+            )
+        );
     }
     
     /**
-     * Get user transactions with real-time status from parent tables
+     * Get user transactions
      */
     public static function get_user_transactions($user_id, $limit = 20, $offset = 0) {
         global $wpdb;
@@ -175,9 +117,10 @@ class GSP_Transactions {
      */
     public static function create_deposit($user_id, $data) {
         global $wpdb;
-        $table = $wpdb->prefix . 'gsp_deposits';
+        $deposits_table = $wpdb->prefix . 'gsp_deposits';
         
-        $wpdb->insert($table, array(
+        // Insert deposit record
+        $wpdb->insert($deposits_table, array(
             'user_id' => $user_id,
             'name' => sanitize_text_field($data['name']),
             'email' => sanitize_email($data['email']),
@@ -190,13 +133,15 @@ class GSP_Transactions {
         $deposit_id = $wpdb->insert_id;
         
         if ($deposit_id) {
-            // Create transaction record with deposit_id for syncing
-            self::create($user_id, 'deposit', floatval($data['amount']), array(
-                'deposit_id' => $deposit_id,
-                'related_id' => $deposit_id,
-                'name' => $data['name'],
-                'email' => $data['email']
-            ), $deposit_id);
+            // Create transaction record with direct ref_id linking
+            self::create(
+                $user_id, 
+                'deposit', 
+                floatval($data['amount']), 
+                'pending',
+                $deposit_id,
+                array('name' => $data['name'], 'email' => $data['email'])
+            );
         }
         
         return $deposit_id;
@@ -226,11 +171,11 @@ class GSP_Transactions {
      */
     public static function update_deposit_status($deposit_id, $status, $notes = '') {
         global $wpdb;
-        $table = $wpdb->prefix . 'gsp_deposits';
+        $deposits_table = $wpdb->prefix . 'gsp_deposits';
         
         // Get deposit details
         $deposit = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE id = %d",
+            "SELECT * FROM $deposits_table WHERE id = %d",
             $deposit_id
         ));
         
@@ -242,9 +187,9 @@ class GSP_Transactions {
         $wpdb->query('START TRANSACTION');
         
         try {
-            // Update deposit status
-            $result = $wpdb->update(
-                $table,
+            // 1. Update deposit status in deposits table
+            $update_result = $wpdb->update(
+                $deposits_table,
                 array(
                     'status' => $status,
                     'admin_notes' => $notes
@@ -252,27 +197,24 @@ class GSP_Transactions {
                 array('id' => $deposit_id)
             );
             
-            if ($result === false) {
-                throw new Exception('Failed to update deposit status');
-            }
+            // 2. Update transaction status using direct ref_id lookup
+            self::update_status_by_ref('deposit', $deposit_id, $status);
             
-            // Sync transaction status
-            self::sync_transaction_status($deposit->user_id, 'deposit', $deposit_id, $status);
-            
-            // If approved, add to user balance
+            // 3. If approved, add to user balance
             if ($status === 'approved') {
                 GSP_User::update_wallet_balance($deposit->user_id, $deposit->amount, 'add');
             }
             
             $wpdb->query('COMMIT');
             
-            // Send email notification
+            // Send email notification (after commit to avoid issues)
             GSP_Email::send_deposit_status($deposit->email, $status, $deposit->amount);
             
             return true;
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('GSP Deposit Update Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -295,12 +237,15 @@ class GSP_Transactions {
         $withdrawal_id = $wpdb->insert_id;
         
         if ($withdrawal_id) {
-            // Create transaction record
-            self::create($user_id, 'withdrawal', floatval($amount), array(
-                'withdrawal_id' => $withdrawal_id,
-                'related_id' => $withdrawal_id,
-                'method' => $method
-            ), $withdrawal_id);
+            // Create transaction record with direct ref_id
+            self::create(
+                $user_id, 
+                'withdrawal', 
+                floatval($amount), 
+                'pending',
+                $withdrawal_id,
+                array('method' => $method)
+            );
         }
         
         return $withdrawal_id;
@@ -345,23 +290,9 @@ class GSP_Transactions {
         if ($status === 'approved') {
             $current_balance = GSP_User::get_balance($withdrawal->user_id);
             if ($current_balance->wallet_balance < $withdrawal->amount) {
-                // Decline due to insufficient funds
-                $wpdb->update(
-                    $table,
-                    array(
-                        'status' => 'declined',
-                        'admin_notes' => 'Insufficient funds at time of approval. User balance: $' . number_format($current_balance->wallet_balance, 2)
-                    ),
-                    array('id' => $withdrawal_id)
-                );
-                
-                self::sync_transaction_status($withdrawal->user_id, 'withdrawal', $withdrawal_id, 'declined');
-                
-                $user = get_userdata($withdrawal->user_id);
-                if ($user) {
-                    GSP_Email::send_withdrawal_status($user->user_email, 'declined', $withdrawal->amount);
-                }
-                return false;
+                // Auto-decline due to insufficient funds
+                $status = 'declined';
+                $notes = 'Automatically declined: Insufficient funds. User balance: $' . number_format($current_balance->wallet_balance, 2);
             }
         }
         
@@ -369,7 +300,7 @@ class GSP_Transactions {
         $wpdb->query('START TRANSACTION');
         
         try {
-            // Update withdrawal status
+            // 1. Update withdrawal status
             $wpdb->update(
                 $table,
                 array(
@@ -379,10 +310,10 @@ class GSP_Transactions {
                 array('id' => $withdrawal_id)
             );
             
-            // Sync transaction status
-            self::sync_transaction_status($withdrawal->user_id, 'withdrawal', $withdrawal_id, $status);
+            // 2. Update transaction status
+            self::update_status_by_ref('withdrawal', $withdrawal_id, $status);
             
-            // If approved, deduct from user balance
+            // 3. If approved, deduct from user balance
             if ($status === 'approved') {
                 GSP_User::update_wallet_balance($withdrawal->user_id, $withdrawal->amount, 'subtract');
             }
@@ -399,6 +330,7 @@ class GSP_Transactions {
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('GSP Withdrawal Update Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -422,11 +354,14 @@ class GSP_Transactions {
         
         if ($transfer_id) {
             // Create outgoing transaction record for sender
-            self::create($from_user_id, 'transfer_out', floatval($amount), array(
-                'transfer_id' => $transfer_id,
-                'related_id' => $transfer_id,
-                'to_user_id' => $to_user_id
-            ), $transfer_id);
+            self::create(
+                $from_user_id, 
+                'transfer_out', 
+                floatval($amount), 
+                'pending',
+                $transfer_id,
+                array('to_user_id' => $to_user_id)
+            );
         }
         
         return $transfer_id;
@@ -456,7 +391,7 @@ class GSP_Transactions {
     }
     
     /**
-     * Update transfer status with atomic handling
+     * Update transfer status
      */
     public static function update_transfer_status($transfer_id, $status, $notes = '') {
         global $wpdb;
@@ -475,22 +410,8 @@ class GSP_Transactions {
         if ($status === 'approved') {
             $sender_balance = GSP_User::get_balance($transfer->from_user_id);
             if ($sender_balance->wallet_balance < $transfer->amount) {
-                $wpdb->update(
-                    $table,
-                    array(
-                        'status' => 'declined',
-                        'admin_notes' => 'Insufficient funds at time of approval. Sender balance: $' . number_format($sender_balance->wallet_balance, 2)
-                    ),
-                    array('id' => $transfer_id)
-                );
-                
-                self::sync_transaction_status($transfer->from_user_id, 'transfer_out', $transfer_id, 'declined');
-                
-                $from_user = get_userdata($transfer->from_user_id);
-                if ($from_user) {
-                    GSP_Email::send_transfer_status($from_user->user_email, 'declined', $transfer->amount, 'sender');
-                }
-                return false;
+                $status = 'declined';
+                $notes = 'Automatically declined: Insufficient funds. Sender balance: $' . number_format($sender_balance->wallet_balance, 2);
             }
         }
         
@@ -498,7 +419,7 @@ class GSP_Transactions {
         $wpdb->query('START TRANSACTION');
         
         try {
-            // Update transfer status
+            // 1. Update transfer status
             $wpdb->update(
                 $table,
                 array(
@@ -508,28 +429,25 @@ class GSP_Transactions {
                 array('id' => $transfer_id)
             );
             
-            // Sync sender's transaction status
-            self::sync_transaction_status($transfer->from_user_id, 'transfer_out', $transfer_id, $status);
+            // 2. Update sender's transaction status
+            self::update_status_by_ref('transfer_out', $transfer_id, $status);
             
             if ($status === 'approved') {
-                // Deduct from sender
+                // 3. Deduct from sender
                 GSP_User::update_wallet_balance($transfer->from_user_id, $transfer->amount, 'subtract');
                 
-                // Add to receiver
+                // 4. Add to receiver
                 GSP_User::update_wallet_balance($transfer->to_user_id, $transfer->amount, 'add');
                 
-                // Create incoming transaction for receiver
-                $wpdb->insert($wpdb->prefix . 'gsp_transactions', array(
-                    'user_id' => $transfer->to_user_id,
-                    'type' => 'transfer_in',
-                    'amount' => $transfer->amount,
-                    'status' => 'approved',
-                    'details' => maybe_serialize(array(
-                        'transfer_id' => $transfer_id,
-                        'related_id' => $transfer_id,
-                        'from_user_id' => $transfer->from_user_id
-                    ))
-                ));
+                // 5. Create incoming transaction for receiver (already approved)
+                self::create(
+                    $transfer->to_user_id,
+                    'transfer_in',
+                    $transfer->amount,
+                    'approved',
+                    $transfer_id,
+                    array('from_user_id' => $transfer->from_user_id)
+                );
             }
             
             $wpdb->query('COMMIT');
@@ -549,6 +467,7 @@ class GSP_Transactions {
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('GSP Transfer Update Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -582,13 +501,16 @@ class GSP_Transactions {
         $conversion_id = $wpdb->insert_id;
         
         if ($conversion_id) {
-            // Create transaction record
+            // Create transaction record with type-specific naming
             $tx_type = 'conversion_' . $data['conversion_type'];
-            self::create($user_id, $tx_type, floatval($data['amount']), array(
-                'conversion_id' => $conversion_id,
-                'related_id' => $conversion_id,
-                'type' => $data['conversion_type']
-            ), $conversion_id);
+            self::create(
+                $user_id, 
+                $tx_type, 
+                floatval($data['amount']), 
+                'pending',
+                $conversion_id,
+                array('type' => $data['conversion_type'])
+            );
         }
         
         return $conversion_id;
@@ -633,20 +555,8 @@ class GSP_Transactions {
         if ($status === 'approved') {
             $current_balance = GSP_User::get_balance($conversion->user_id);
             if ($current_balance->wallet_balance < $conversion->amount) {
-                $wpdb->update(
-                    $table,
-                    array(
-                        'status' => 'declined',
-                        'admin_notes' => 'Insufficient funds at time of approval. User balance: $' . number_format($current_balance->wallet_balance, 2)
-                    ),
-                    array('id' => $conversion_id)
-                );
-                
-                $tx_type = 'conversion_' . $conversion->conversion_type;
-                self::sync_transaction_status($conversion->user_id, $tx_type, $conversion_id, 'declined');
-                
-                GSP_Email::send_conversion_status($conversion->email, 'declined', $conversion->amount, $conversion->conversion_type);
-                return false;
+                $status = 'declined';
+                $notes = 'Automatically declined: Insufficient funds. User balance: $' . number_format($current_balance->wallet_balance, 2);
             }
         }
         
@@ -654,7 +564,7 @@ class GSP_Transactions {
         $wpdb->query('START TRANSACTION');
         
         try {
-            // Update conversion status
+            // 1. Update conversion status
             $wpdb->update(
                 $table,
                 array(
@@ -664,11 +574,11 @@ class GSP_Transactions {
                 array('id' => $conversion_id)
             );
             
-            // Sync transaction status
+            // 2. Update transaction status
             $tx_type = 'conversion_' . $conversion->conversion_type;
-            self::sync_transaction_status($conversion->user_id, $tx_type, $conversion_id, $status);
+            self::update_status_by_ref($tx_type, $conversion_id, $status);
             
-            // If approved, deduct from balance
+            // 3. If approved, deduct from balance
             if ($status === 'approved') {
                 GSP_User::update_wallet_balance($conversion->user_id, $conversion->amount, 'subtract');
             }
@@ -682,6 +592,7 @@ class GSP_Transactions {
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('GSP Conversion Update Error: ' . $e->getMessage());
             return false;
         }
     }

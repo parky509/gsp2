@@ -17,7 +17,7 @@ class GSP_Database {
         
         $charset_collate = $wpdb->get_charset_collate();
         
-        // Transactions table
+        // Transactions table - includes ref_id for direct linking to parent tables
         $table_transactions = $wpdb->prefix . 'gsp_transactions';
         $sql_transactions = "CREATE TABLE $table_transactions (
             id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -25,13 +25,16 @@ class GSP_Database {
             type varchar(50) NOT NULL,
             amount decimal(20,8) NOT NULL,
             status varchar(20) DEFAULT 'pending',
+            ref_id bigint(20) DEFAULT 0,
             details longtext,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY user_id (user_id),
             KEY type (type),
-            KEY status (status)
+            KEY status (status),
+            KEY ref_id (ref_id),
+            KEY type_ref (type, ref_id)
         ) $charset_collate;";
         
         // User balances table
@@ -144,8 +147,79 @@ class GSP_Database {
         dbDelta($sql_conversions);
         dbDelta($sql_settings);
         
+        // Run migrations for existing installations
+        self::run_migrations();
+        
         // Insert default settings
         self::insert_default_settings();
+    }
+    
+    /**
+     * Run database migrations for existing installations
+     */
+    private static function run_migrations() {
+        global $wpdb;
+        
+        // Add ref_id column if it doesn't exist
+        $table_transactions = $wpdb->prefix . 'gsp_transactions';
+        $column_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                 WHERE TABLE_SCHEMA = %s 
+                 AND TABLE_NAME = %s 
+                 AND COLUMN_NAME = 'ref_id'",
+                DB_NAME,
+                $table_transactions
+            )
+        );
+        
+        if ($column_exists == 0) {
+            $wpdb->query("ALTER TABLE $table_transactions ADD COLUMN ref_id bigint(20) DEFAULT 0 AFTER status");
+            $wpdb->query("ALTER TABLE $table_transactions ADD INDEX ref_id (ref_id)");
+            $wpdb->query("ALTER TABLE $table_transactions ADD INDEX type_ref (type, ref_id)");
+            
+            // Migrate existing data: extract ref_id from details
+            self::migrate_existing_transactions();
+        }
+    }
+    
+    /**
+     * Migrate existing transactions to populate ref_id from details
+     */
+    private static function migrate_existing_transactions() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'gsp_transactions';
+        
+        // Get all transactions without ref_id
+        $transactions = $wpdb->get_results("SELECT id, type, details FROM $table WHERE ref_id = 0 OR ref_id IS NULL");
+        
+        foreach ($transactions as $tx) {
+            $details = maybe_unserialize($tx->details);
+            $ref_id = 0;
+            
+            if (is_array($details)) {
+                // Check for various ID keys
+                if (isset($details['related_id'])) {
+                    $ref_id = intval($details['related_id']);
+                } elseif (isset($details['deposit_id'])) {
+                    $ref_id = intval($details['deposit_id']);
+                } elseif (isset($details['withdrawal_id'])) {
+                    $ref_id = intval($details['withdrawal_id']);
+                } elseif (isset($details['transfer_id'])) {
+                    $ref_id = intval($details['transfer_id']);
+                } elseif (isset($details['conversion_id'])) {
+                    $ref_id = intval($details['conversion_id']);
+                }
+            }
+            
+            if ($ref_id > 0) {
+                $wpdb->update(
+                    $table,
+                    array('ref_id' => $ref_id),
+                    array('id' => $tx->id)
+                );
+            }
+        }
     }
     
     /**
